@@ -10,13 +10,26 @@ class PlaneLandingServiceTest{
 
     val planeId = UUID.randomUUID()
     val plane = Plane(planeId)
-    val airport = Airport("Mexico")
+
+    val paris = "Paris"
+    val mexico = "Mexico"
+
+    val mexicoAirport = Airport(mexico)
+    val parisAirport = Airport(paris)
 
     @Test
-    fun raiseMessagePlaneLandedWhenPlaneHasLand() {
+    fun raisePlaneLandedWhenPlaneHasLand() {
         var history = mutableListOf<Any>()
-        plane.land(history, airport)
-        assertThat(history).containsExactly(PlaneLanded("Mexico",planeId))
+        plane.takeOf(history, mexicoAirport)
+        assertThat(history).containsExactly(PlaneTookOf(mexico,planeId))
+    }
+
+    @Test
+    fun raisePlaneTookOfWhenPlaneHasTookOf() {
+        var history = mutableListOf<Any>()
+        plane.takeOf(history, parisAirport)
+        plane.land(history, mexicoAirport)
+        assertThat(history).containsExactly(PlaneTookOf(paris,planeId), PlaneLanded(mexico,planeId))
     }
 }
 
