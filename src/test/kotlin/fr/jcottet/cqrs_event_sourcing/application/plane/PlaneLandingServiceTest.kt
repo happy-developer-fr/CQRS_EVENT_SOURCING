@@ -1,6 +1,7 @@
 package fr.jcottet.cqrs_event_sourcing.application.plane
 
 import fr.jcottet.cqrs_event_sourcing.domain.Airport
+import fr.jcottet.cqrs_event_sourcing.domain.History
 import fr.jcottet.cqrs_event_sourcing.domain.Plane
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -17,19 +18,32 @@ class PlaneLandingServiceTest{
     val mexicoAirport = Airport(mexico)
     val parisAirport = Airport(paris)
 
+    var history = History()
+
     @Test
     fun raisePlaneLandedWhenPlaneHasLand() {
-        var history = mutableListOf<Any>()
         plane.takeOf(history, mexicoAirport)
-        assertThat(history).containsExactly(PlaneTookOf(mexico,planeId))
+        assertThat(history.copy()).containsExactly(PlaneTookOf(mexicoAirport,planeId))
     }
 
     @Test
     fun raisePlaneTookOfWhenPlaneHasTookOf() {
-        var history = mutableListOf<Any>()
+
         plane.takeOf(history, parisAirport)
         plane.land(history, mexicoAirport)
-        assertThat(history).containsExactly(PlaneTookOf(paris,planeId), PlaneLanded(mexico,planeId))
+        assertThat(history.copy()).containsExactly(PlaneTookOf(parisAirport,planeId), PlaneLanded(mexicoAirport,planeId))
+    }
+
+    @Test
+    fun notRaisedLandedWhenPlaneIsOnTheGround() {
+        history.addEvent(PlaneTookOf(parisAirport,planeId))
+        history.addEvent(PlaneLanded(mexicoAirport,planeId))
+
+        var plane = Plane(history, planeId)
+
+        plane.land(history,mexicoAirport)
+
+        assertThat(history.copy()).containsExactly(PlaneTookOf(parisAirport,planeId), PlaneLanded(mexicoAirport,planeId))
     }
 }
 
