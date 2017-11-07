@@ -1,16 +1,10 @@
 package fr.jcottet.cqrs_event_sourcing.application.plane
 
-import fr.jcottet.cqrs_event_sourcing.domain.Airport
-import fr.jcottet.cqrs_event_sourcing.domain.History
-import fr.jcottet.cqrs_event_sourcing.domain.Plane
+import fr.jcottet.cqrs_event_sourcing.domain.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import java.util.*
 
 class PlaneLandingServiceTest{
-
-    val planeId = UUID.randomUUID()
-    val plane = Plane(planeId)
 
     val paris = "Paris"
     val mexico = "Mexico"
@@ -18,32 +12,47 @@ class PlaneLandingServiceTest{
     val mexicoAirport = Airport(mexico)
     val parisAirport = Airport(paris)
 
-    var history = History()
+    var history = MemoryEventStream()
+    val parisToMexico = FlightPlan(parisAirport, mexicoAirport)
 
     @Test
     fun raisePlaneLandedWhenPlaneHasLand() {
-        plane.takeOf(history, mexicoAirport)
-        assertThat(history.copy()).containsExactly(PlaneTookOf(mexicoAirport,planeId))
+        var plane = Plane(history)
+        plane.recordFlighPlan(history, parisToMexico)
+        plane.takeOf(history)
+        assertThat(history.events()).containsExactly(FlightPlanRecorded(parisToMexico), PlaneTookOf())
     }
 
     @Test
     fun raisePlaneTookOfWhenPlaneHasTookOf() {
-
-        plane.takeOf(history, parisAirport)
-        plane.land(history, mexicoAirport)
-        assertThat(history.copy()).containsExactly(PlaneTookOf(parisAirport,planeId), PlaneLanded(mexicoAirport,planeId))
+        var plane = Plane(history)
+        plane.recordFlighPlan(history, parisToMexico)
+        plane.takeOf(history)
+        plane.land(history)
+        assertThat(history.events()).containsExactly(FlightPlanRecorded(parisToMexico), PlaneTookOf(), PlaneLanded())
     }
 
     @Test
-    fun notRaisedLandedWhenPlaneIsOnTheGround() {
-        history.addEvent(PlaneTookOf(parisAirport,planeId))
-        history.addEvent(PlaneLanded(mexicoAirport,planeId))
+    fun notRaisedLandedWhenPlaneLandTwice() {
+        history.add(FlightPlanRecorded(parisToMexico))
+        history.add(PlaneTookOf())
+        history.add(PlaneLanded())
 
-        var plane = Plane(history, planeId)
+        var plane = Plane(history)
 
-        plane.land(history,mexicoAirport)
+        plane.land(history)
 
-        assertThat(history.copy()).containsExactly(PlaneTookOf(parisAirport,planeId), PlaneLanded(mexicoAirport,planeId))
+        assertThat(history.events()).containsExactly(FlightPlanRecorded(parisToMexico),PlaneTookOf(), PlaneLanded())
+    }
+
+    @Test
+    fun planeAirportIsLandedAirport() {
+        history.add(FlightPlanRecorded(parisToMexico))
+        history.add(PlaneTookOf())
+        history.add(PlaneLanded())
+
+        var plane = Plane(history)
+        assertThat(plane.currentAirPort()).isEqualTo(mexicoAirport)
     }
 }
 

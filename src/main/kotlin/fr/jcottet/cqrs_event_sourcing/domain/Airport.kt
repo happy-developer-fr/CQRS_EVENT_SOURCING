@@ -1,6 +1,10 @@
 package fr.jcottet.cqrs_event_sourcing.domain
 
-class Airport(val city: String){
+class Airport(val city: String?){
+
+    companion object {
+        val ø  = Airport(null)
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -14,6 +18,8 @@ class Airport(val city: String){
     }
 
     override fun hashCode(): Int {
-        return city.hashCode()
+        return city?.hashCode() ?: 0
     }
+
+
 }

@@ -1,38 +1,56 @@
 package fr.jcottet.cqrs_event_sourcing.domain
 
-import fr.jcottet.cqrs_event_sourcing.application.plane.PlaneLanded
-import fr.jcottet.cqrs_event_sourcing.application.plane.PlaneState
-import fr.jcottet.cqrs_event_sourcing.application.plane.PlaneState.*
-import fr.jcottet.cqrs_event_sourcing.application.plane.PlaneTookOf
+import fr.jcottet.cqrs_event_sourcing.domain.Airport.Companion.ø
+import fr.jcottet.cqrs_event_sourcing.domain.PlaneState.*
 import java.util.*
 
-class Plane(val id: UUID) {
+class Plane {
 
-    var planState: PlaneState = ON_GROUND
+    private var planeProjection:PlaneProjection
 
-    constructor(history: History, id: UUID) : this(id) {
-        history.write = false
-        history.forEach {
-           when (it) {
-                is PlaneLanded -> land(history,it.airport)
-                is PlaneTookOf -> takeOf(history, it.airport)
-            }
-        }
-        history.write = true
+    constructor(eventStream: EventStream) {
+        planeProjection = PlaneProjection(planeId =UUID.randomUUID())
+        eventStream.forEach {planeProjection = planeProjection.ApplyGeneric(it)}
     }
 
-    fun land(history: History, toAirport: Airport) {
-        if (planState == FLIES) {
-                history.addEvent(PlaneLanded(toAirport, id))
-            planState = ON_GROUND
+    fun recordFlighPlan(eventStream: EventStream, flightPlan: FlightPlan){
+        publishAndApply(eventStream, FlightPlanRecorded(flightPlan))
+    }
+
+    fun land(eventStream: EventStream) {
+        if (flying()) {
+            publishAndApply(eventStream, PlaneLanded())
         }
     }
 
-    fun takeOf(history: History, fromAirport: Airport) {
-        if (planState == ON_GROUND) {
-                history.addEvent(PlaneTookOf(fromAirport, id))
-            planState = FLIES
+    fun takeOf(eventStream: EventStream) {
+        if (!flying()) {
+            publishAndApply(eventStream, PlaneTookOf())
         }
     }
 
+    fun  flying(): Boolean = planeProjection.planeState == FLIES
+
+    fun currentAirPort() = planeProjection.currentAirport
+
+    private fun publishAndApply(eventStream: EventStream, domainEvent: DomainEvent) {
+        eventStream.add(domainEvent)
+        planeProjection = planeProjection.ApplyGeneric(domainEvent)
+    }
+}
+
+class PlaneProjection(val planeState: PlaneState = ON_GROUND, val currentAirport: Airport = ø, val flightPlan: FlightPlan = FlightPlan.ø, val planeId:UUID){
+    fun ApplyGeneric(evt:DomainEvent) : PlaneProjection =
+        when (evt) {
+            is PlaneLanded -> Apply(evt)
+            is PlaneTookOf -> Apply(evt)
+            is FlightPlanRecorded -> Apply(evt)
+            else -> this
+        }
+
+    fun Apply(evt : PlaneLanded) = PlaneProjection(ON_GROUND, this.flightPlan.destinationAirport, FlightPlan.ø, planeId)
+
+    fun Apply(evt : PlaneTookOf) = PlaneProjection(FLIES, ø, this.flightPlan, planeId)
+
+    fun Apply(evt : FlightPlanRecorded) = PlaneProjection(planeState, currentAirport, evt.flightPlan, planeId)
 }
