@@ -1,5 +1,5 @@
 package fr.jcottet.cqrs_event_sourcing.domain
 
 
-class PlaneLanded : DomainEvent, EqHashEvent()
+class PlaneLanded : DomainEvent, EqHashEmptyEvent()
 
