@@ -13,22 +13,23 @@ class PlaneLandingServiceTest{
     val parisAirport = Airport(paris)
 
     var history = MemoryEventStream()
+    var eventBus = EventBus(history)
     val parisToMexico = FlightPlan(parisAirport, mexicoAirport)
 
     @Test
     fun raisePlaneLandedWhenPlaneHasLand() {
-        var plane = Plane(history)
-        plane.recordFlighPlan(history, parisToMexico)
-        plane.takeOf(history)
+        var plane = Plane()
+        plane.recordFlighPlan(eventBus, parisToMexico)
+        plane.takeOf(eventBus)
         assertThat(history.events()).containsExactly(FlightPlanRecorded(parisToMexico), PlaneTookOf())
     }
 
     @Test
     fun raisePlaneTookOfWhenPlaneHasTookOf() {
-        var plane = Plane(history)
-        plane.recordFlighPlan(history, parisToMexico)
-        plane.takeOf(history)
-        plane.land(history)
+        var plane = Plane()
+        plane.recordFlighPlan(eventBus, parisToMexico)
+        plane.takeOf(eventBus)
+        plane.land(eventBus)
         assertThat(history.events()).containsExactly(FlightPlanRecorded(parisToMexico), PlaneTookOf(), PlaneLanded())
     }
 
@@ -38,9 +39,9 @@ class PlaneLandingServiceTest{
         history.add(PlaneTookOf())
         history.add(PlaneLanded())
 
-        var plane = Plane(history)
+        var plane = Plane().play(history)
 
-        plane.land(history)
+        plane.land(eventBus)
 
         assertThat(history.events()).containsExactly(FlightPlanRecorded(parisToMexico),PlaneTookOf(), PlaneLanded())
     }
@@ -51,7 +52,7 @@ class PlaneLandingServiceTest{
         history.add(PlaneTookOf())
         history.add(PlaneLanded())
 
-        var plane = Plane(history)
+        var plane = Plane().play(history)
         assertThat(plane.currentAirPort()).isEqualTo(mexicoAirport)
     }
 }
