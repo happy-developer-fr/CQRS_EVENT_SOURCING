@@ -1,7 +1,8 @@
 package fr.jcottet.cqrs_event_sourcing.domain
 
 import fr.jcottet.cqrs_event_sourcing.domain.Airport.Companion.ø
-import fr.jcottet.cqrs_event_sourcing.domain.PlaneState.*
+import fr.jcottet.cqrs_event_sourcing.domain.PlaneState.FLIES
+import fr.jcottet.cqrs_event_sourcing.domain.PlaneState.ON_GROUND
 import java.util.*
 
 class Plane {

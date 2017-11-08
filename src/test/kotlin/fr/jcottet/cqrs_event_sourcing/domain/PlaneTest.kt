@@ -1,6 +1,5 @@
 package fr.jcottet.cqrs_event_sourcing.domain
 
-import fr.jcottet.cqrs_event_sourcing.domain.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 

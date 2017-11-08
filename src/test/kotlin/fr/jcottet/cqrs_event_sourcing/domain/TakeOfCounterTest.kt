@@ -1,6 +1,6 @@
 package fr.jcottet.cqrs_event_sourcing.domain
 
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.util.stream.IntStream
 
