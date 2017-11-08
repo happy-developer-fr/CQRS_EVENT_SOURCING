@@ -12,7 +12,7 @@ class MemoryEventStream : EventStream{
         return myHistory.forEach(action)
     }
 
-    override fun events(): List<DomainEvent>{
+    override fun history(): List<DomainEvent>{
         return myHistory.toList()
     }
 }

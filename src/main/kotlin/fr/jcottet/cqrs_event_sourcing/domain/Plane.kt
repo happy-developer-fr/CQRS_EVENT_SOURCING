@@ -8,29 +8,31 @@ import java.util.*
 class Plane {
 
     private var planeProjection:PlaneProjection
+    private var eventPublisher: EventPublisher
 
-    constructor() {
+    constructor(eventPublisher: EventPublisher) {
         planeProjection = PlaneProjection(planeId =UUID.randomUUID())
+        this.eventPublisher = eventPublisher
     }
 
-    fun play(eventStream: EventStream): Plane {
-        eventStream.forEach {planeProjection = planeProjection.ApplyGeneric(it)}
+    fun replay(history: List<DomainEvent>): Plane {
+        history.forEach {planeProjection = planeProjection.ApplyGeneric(it)}
         return this
     }
 
-    fun recordFlighPlan(eventPublisher: EventPublisher, flightPlan: FlightPlan){
-        publishAndApply(eventPublisher, FlightPlanRecorded(flightPlan))
+    fun recordFlighPlan(flightPlan: FlightPlan){
+        publishAndApply(FlightPlanRecorded(flightPlan))
     }
 
-    fun land(eventPublisher: EventPublisher) {
+    fun land() {
         if (flying()) {
-            publishAndApply(eventPublisher, PlaneLanded())
+            publishAndApply(PlaneLanded())
         }
     }
 
-    fun takeOf(eventPublisher: EventPublisher) {
+    fun takeOf() {
         if (!flying()) {
-            publishAndApply(eventPublisher, PlaneTookOf())
+            publishAndApply(PlaneTookOf())
         }
     }
 
@@ -38,7 +40,7 @@ class Plane {
 
     fun currentAirPort() = planeProjection.currentAirport
 
-    private fun publishAndApply(eventPublisher: EventPublisher, domainEvent: DomainEvent) {
+    private fun publishAndApply(domainEvent: DomainEvent) {
         eventPublisher.publish(domainEvent)
         planeProjection = planeProjection.ApplyGeneric(domainEvent)
     }

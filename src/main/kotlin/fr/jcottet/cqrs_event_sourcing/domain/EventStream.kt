@@ -6,5 +6,5 @@ interface EventStream {
 
     fun forEach(action: (DomainEvent) -> Unit): Unit
 
-    fun events(): List<DomainEvent>
+    fun history(): List<DomainEvent>
 }

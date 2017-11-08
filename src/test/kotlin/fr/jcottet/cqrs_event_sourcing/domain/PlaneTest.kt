@@ -11,47 +11,47 @@ class PlaneTest {
     val mexicoAirport = Airport(mexico)
     val parisAirport = Airport(paris)
 
-    var history = MemoryEventStream()
-    var eventBus = EventBus(history)
+    var eventStream = MemoryEventStream()
+    var eventBus = EventBus(eventStream)
     val parisToMexico = FlightPlan(parisAirport, mexicoAirport)
 
     @Test
     fun raisePlaneLandedWhenPlaneHasLand() {
-        var plane = Plane()
-        plane.recordFlighPlan(eventBus, parisToMexico)
-        plane.takeOf(eventBus)
-        assertThat(history.events()).containsExactly(FlightPlanRecorded(parisToMexico), PlaneTookOf())
+        var plane = Plane(eventBus)
+        plane.recordFlighPlan(parisToMexico)
+        plane.takeOf()
+        assertThat(eventStream.history()).containsExactly(FlightPlanRecorded(parisToMexico), PlaneTookOf())
     }
 
     @Test
     fun raisePlaneTookOfWhenPlaneHasTookOf() {
-        var plane = Plane()
-        plane.recordFlighPlan(eventBus, parisToMexico)
-        plane.takeOf(eventBus)
-        plane.land(eventBus)
-        assertThat(history.events()).containsExactly(FlightPlanRecorded(parisToMexico), PlaneTookOf(), PlaneLanded())
+        var plane = Plane(eventBus)
+        plane.recordFlighPlan(parisToMexico)
+        plane.takeOf()
+        plane.land()
+        assertThat(eventStream.history()).containsExactly(FlightPlanRecorded(parisToMexico), PlaneTookOf(), PlaneLanded())
     }
 
     @Test
     fun notRaisedLandedWhenPlaneLandTwice() {
-        history.add(FlightPlanRecorded(parisToMexico))
-        history.add(PlaneTookOf())
-        history.add(PlaneLanded())
+        eventStream.add(FlightPlanRecorded(parisToMexico))
+        eventStream.add(PlaneTookOf())
+        eventStream.add(PlaneLanded())
 
-        var plane = Plane().play(history)
+        var plane = Plane(eventBus).replay(eventStream.history())
 
-        plane.land(eventBus)
+        plane.land()
 
-        assertThat(history.events()).containsExactly(FlightPlanRecorded(parisToMexico),PlaneTookOf(), PlaneLanded())
+        assertThat(eventStream.history()).containsExactly(FlightPlanRecorded(parisToMexico),PlaneTookOf(), PlaneLanded())
     }
 
     @Test
     fun planeAirportIsLandedAirport() {
-        history.add(FlightPlanRecorded(parisToMexico))
-        history.add(PlaneTookOf())
-        history.add(PlaneLanded())
+        eventStream.add(FlightPlanRecorded(parisToMexico))
+        eventStream.add(PlaneTookOf())
+        eventStream.add(PlaneLanded())
 
-        var plane = Plane().play(history)
+        var plane = Plane(eventBus).replay(eventStream.history())
         assertThat(plane.currentAirPort()).isEqualTo(mexicoAirport)
     }
 }
