@@ -1,10 +1,10 @@
-package fr.jcottet.cqrs_event_sourcing.application.plane
+package fr.jcottet.cqrs_event_sourcing.domain
 
 import fr.jcottet.cqrs_event_sourcing.domain.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-class PlaneLandingServiceTest{
+class PlaneTest {
 
     val paris = "Paris"
     val mexico = "Mexico"
